@@ -47,19 +47,22 @@ def store_new_entry(entry):
     conn = sqlite3.connect('Journal.db')
     c = conn.cursor()
 
-    # If table hasn't already been created, create one:
-    c.execute("CREATE TABLE IF NOT EXISTS Journal (date, entry)")
 
-    # Save new entry if it's a new day:
-    # try:
-    #     c.execute('CREATE UNIQUE INDEX IF NOT EXISTS MyUniqueIndexName ON Journal (date)')
-    #     c.execute('INSERT INTO Journal VALUES (?,?)', (date, entry))
-    # except sqlite3.IntegrityError:
-    #     print("Daily entry already in table.")
-    c.execute('INSERT INTO Journal VALUES (?,?)', (date, entry))
+    # If table hasn't already been created, create one:
+    c.execute("CREATE TABLE IF NOT EXISTS Journal (num INTEGER PRIMARY KEY, date, entry)")
+
+    c.execute("INSERT INTO Journal VALUES (?,?,?)", (None, date, entry))
 
 
     # Save and exit:
+    conn.commit()
+    conn.close()
+
+
+def delete_last_entry():
+    conn = sqlite3.connect('Journal.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM Journal WHERE num = (SELECT MAX(num) FROM Journal);");
     conn.commit()
     conn.close()
 
@@ -71,9 +74,9 @@ def main():
         if start == True:
             os.system("clear")
 
-        print("+----------------+-------------------------+-----------+")
-        print("| New Entry (e)  |  Print Old Entries (p)  |  Quit (q) |")
-        print("+----------------+-------------------------+-----------+\n")
+        print("+----------------+-------------------------+--------------------+----------+")
+        print("| New Entry (e)  |  Print Old Entries (p)  |  Delete Last (del) | Quit (q) |")
+        print("+----------------+-------------------------+--------------------+----------+\n")
         response = input()
 
         if response == 'e':
@@ -81,6 +84,9 @@ def main():
 
         elif response == 'p':
             print_journal_entries()
+
+        elif response == 'del':
+            delete_last_entry()
 
         elif response == 'q':
             print("\nGoodbye! :)")
