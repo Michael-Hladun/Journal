@@ -5,7 +5,8 @@ import sqlite3  # table entries
 import pandas as pd  # printing an attractive table
 import tabulate as tab  # printing an attractive table
 import sys # exit script
-import os
+import os # os communication
+import re # regular expressions
 
 
 # Print Journal entries
@@ -18,8 +19,20 @@ def print_journal_entries():
                             tablefmt='grid',
                             showindex=False) )
 
+# Replace \s with \n after 70 characters
+def format_entry(entry):
+    entry = re.split(r'(\s+)', entry)
+    length = 0
+    for i, x in enumerate(entry):
+        length += len(x)
+        if length >= 70 and x == " ":
+            entry[i] = "\n"
+            length = 0
+    entry = "".join(entry)
+    return entry
 
 # Write new Journal entry
+# NOTE: \n ^D to finish entry.
 def write_new_entry():
     os.system("clear")
     date = time.strftime("%b %d, %Y | %H:%M |")
@@ -29,10 +42,10 @@ def write_new_entry():
     entry = sys.stdin.read()
     addTime = time.strftime("%H:%M")
 
-    # \n ^D to finish entry.
-
+    # if entry is not empty
     if entry.replace("\n","").replace(" ", "") != "":
-        store_new_entry(addTime + "\n\n" + entry)
+        # add entry
+        store_new_entry(addTime + "\n\n" + format_entry(entry))
     else:
         print("Empty entry not committed.")
 
@@ -40,19 +53,15 @@ def write_new_entry():
 
 # Store new Journal entry
 def store_new_entry(entry):
-
     date = time.strftime("%b %d, %Y")
 
     # Table entry process:
     conn = sqlite3.connect('Journal.db')
     c = conn.cursor()
 
-
     # If table hasn't already been created, create one:
     c.execute("CREATE TABLE IF NOT EXISTS Journal (num INTEGER PRIMARY KEY, date, entry)")
-
     c.execute("INSERT INTO Journal VALUES (?,?,?)", (None, date, entry))
-
 
     # Save and exit:
     conn.commit()
